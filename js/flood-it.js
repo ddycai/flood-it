@@ -5,6 +5,7 @@ var original = [];
 var cells = [];		//grid of jquery objects
 var seen = [];		//marks seen positions during flooding
 var computingMode = false;
+var solved = false;
 var solveLabel;
 
 /**
@@ -20,6 +21,8 @@ function clearSeen() {
  * Starts a new game
  */
 function makeGrid() {
+
+  solved = false;
 	
 	//initialize grids
 	for(var i = 0; i < size; i++) {
@@ -83,6 +86,9 @@ function check() {
 	return true;
 }
 
+/**
+ * Updates the turn text
+ */
 function updateTurn(n) {
 	turn = n;
 	$('#counter').html(n);
@@ -90,6 +96,9 @@ function updateTurn(n) {
 		$('#solve-button').show();
 }
 
+/**
+ * Resets the game
+ */
 function reset() {	
 	for(var i = 0; i < size; i++)
 		for(var j = 0; j < size; j++) {
@@ -100,6 +109,9 @@ function reset() {
 	updateTurn(0);
 }
 
+/**
+ * Refreshes the board with a new color
+ */
 function refresh() {	
 	for(var i = 0; i < size; i++)
 		for(var j = 0; j < size; j++) {
@@ -137,11 +149,12 @@ function flood(c) {
 	_flood(0, 0, grid[0][0], c);
 	updateTurn(++turn);
 
-	if(!computingMode && check()) {
+	if(!solved && !computingMode && check()) {
 		if(turn <= computerSolution)
 			alert("You completed the challenge!");
 		else
 			alert("Puzzle cleared in " + turn + " moves!");
+    solved = true;
 		$('#solve-button').hide();
 	} else if(computerSolution === turn) {
 		alert("You failed to complete the challenge.");
