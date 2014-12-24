@@ -1,0 +1,41 @@
+#wrapper {
+  position: relative;
+	margin: auto;
+	width: 440px;
+}
+
+#grid {
+	border-collapse: collapse;
+	border: 1px solid #212121;
+}
+
+#grid td, #grid th {
+	padding: 0px;
+	border: 0px;
+}
+
+#palette {
+  position: absolute;
+  top: 35px;
+  right: -40px;
+}
+
+.palette-colour {
+	display: block;
+	border: 1px solid #333333;
+	width: 40px;
+	height: 40px;
+	margin-bottom: 5px;
+}
+
+
+.outer {
+  position: relative;
+  height: 35px
+}
+
+.bottom-right {
+ position:absolute;
+ bottom:5px;
+ right:15px;
+}

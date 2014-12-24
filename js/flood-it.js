@@ -7,6 +7,7 @@ var seen = [];		//marks seen positions during flooding
 var computingMode = false;
 var solved = false;
 var solveLabel;
+var colours = [];
 
 /**
  * Clears seen grid
