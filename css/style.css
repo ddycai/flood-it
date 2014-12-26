@@ -1,3 +1,13 @@
+@media (min-width: 768px) {
+  .container {
+    max-width: 460px;
+  }
+}
+
+.container {
+  position: relative;
+}
+
 #grid {
   border-collapse: collapse;
   border: 1px solid #212121;
@@ -11,7 +21,7 @@
 #palette {
   position: absolute;
   top: 35px;
-  right: -40px;
+  right: -30px;
 }
 
 .palette-colour {
