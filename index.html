@@ -32,9 +32,29 @@
           <option value="21">21</option>
           <option value="28">28</option>
         </select>
-        <button class="btn btn-primary" data-toggle="popover" data-placement="top" title="Instructions" data-content="Fill all the squares with one colour in the least amount of moves. Use the palette on the right to change the top-left square and all adjacent squares. Can you beat the computer?">Help</button>
-      </div>
+        <button class="btn btn-primary" data-toggle="modal" data-target="#help">Help</button> </div>
       <div id="palette"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Help</h4>
+          </div>
+          <div class="modal-body">
+            <p>Your objective is to fill the entire grid with the same colour. To do this, select a colour from the palette on the right. The top left square and all squares connected to it will be changed to that color. Two squares are connected if they are adjacent and of the same colour.</p>
+            <p>Can you fill the entire grid in less steps than the computer?</p>
+            <p>The computer's number of moves is shown on top as (n/m) where n is the number of moves you have taken, and m is the number of moves to beat.</p>
+            <p>Enjoy!</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- scripts -->
