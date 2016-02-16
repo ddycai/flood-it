@@ -5,6 +5,7 @@ var original = [];
 var cells = [];   //grid of jquery objects
 var seen = [];    //marks seen positions during flooding
 var computingMode = false;
+var solverMode = false;
 var solved = false;
 var solveLabel;
 var colours = [];
@@ -40,16 +41,15 @@ function makeGrid() {
   }
 
   //populate table
-  var $table = $('#grid');
+  var $table = $('#grid'), $tr, $td, rand;
   $table.empty();
   for(var i = 0; i < size; i++) {
-    var $tr = $('<tr></tr>');
-    $table.append($tr);
+    $tr = $('<tr>');
     for(var j = 0; j < size; j++) {
-      var $td = $('<td></td>');
+      rand =  Math.floor(Math.random() * colours.length);
+      $td = $('<td>');
       $td.addClass('cell');
       $tr.append($td);
-      var rand =  Math.floor(Math.random() * colours.length);
       $td.css("background-color", '#' + colours[rand]);
       $td.height(Math.floor(420/size));
       $td.width(Math.floor(420/size));
@@ -57,6 +57,7 @@ function makeGrid() {
       grid[i][j] = rand;
       original[i][j] = rand;
     }
+    $table.append($tr);
   } 
   computerSolve();
   updateTurn(0);
@@ -69,7 +70,7 @@ function makeControls() {
   var $palette = $('#palette');
   $palette.empty();
   for(var i = 0; i < colours.length; i++) {
-    var $button = $('<button></button>');
+    var $button = $('<button>');
     $button.addClass('palette-colour');
     $button.attr('value', i);
     $button.css('background-color', '#' + colours[i]);
@@ -79,18 +80,6 @@ function makeControls() {
   $('.palette-colour').click(function() {
     flood(Number($(this).val()));
   });
-}
-
-/**
- * Checks if the grid is completely filled
- */
-function check() {  
-  for(var i = 0; i < size; i++)
-    for(var j = 0; j < size; j++) {
-      if(grid[i][j] != grid[0][0])
-        return false;
-    }
-  return true;
 }
 
 /**
@@ -127,22 +116,25 @@ function refresh() {
 }
 
 /**
- * Recursive flooding helper function
+ * Recursive flooding helper function.
+ * Returns the number of grids flooded.
  */
 function _flood(i, j, original, replace) {
-  if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j])
-    return;
+  if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j]) {
+    return 0;
+  }
   seen[i][j] = true;
-  if(grid[i][j] == original) {
+  if (grid[i][j] === original) {
     grid[i][j] = replace;
-    if(!computingMode)
+    if(!computingMode) {
       cells[i][j].css('background-color', '#' + colours[replace]);
-  } else
-    return;
-  _flood(i, j + 1, original, replace);
-  _flood(i, j - 1, original, replace);
-  _flood(i + 1, j, original, replace);
-  _flood(i - 1, j, original, replace);
+    }
+    return 1 + _flood(i, j + 1, original, replace) +
+      _flood(i, j - 1, original, replace) +
+      _flood(i + 1, j, original, replace) +
+      _flood(i - 1, j, original, replace);
+  }
+  return (grid[i][j] === replace) ? 1 : 0;
 }
 
 /**
@@ -150,22 +142,28 @@ function _flood(i, j, original, replace) {
  */
 function flood(c) {
   if(grid[0][0] == c) {
-    return;
+    return false;
   }
   clearSeen();
-  _flood(0, 0, grid[0][0], c);
+  // Check if number of cells flooded is equal to size of grid.
+  var countFlooded = _flood(0, 0, grid[0][0], c);
+  console.log(countFlooded);
+  var checkSolved = countFlooded === size * size;
   updateTurn(++turn);
 
-  if(!solved && !computingMode && check()) {
-    if(turn <= computerSolution)
-      alert(successMsg);
-    else
-      alert("Puzzle cleared in " + turn + " moves!");
-    solved = true;
-    $('#solve-btn').hide();
-  } else if(computerSolution === turn) {
-    alert(failMsg);
+  if (!computingMode && !solverMode) {
+    if(!solved && checkSolved) {
+      if(turn <= computerSolution)
+        alert(successMsg);
+      else
+        alert("Puzzle cleared in " + turn + " moves!");
+      solved = true;
+      $('#solve-btn').hide();
+    } else if(computerSolution === turn) {
+      alert(failMsg);
+    }
   }
+  return checkSolved;
 }
 
 /**
@@ -176,8 +174,9 @@ var list = [];
 var computerSolution = -1;
 
 function countConnected(i, j, c) {
-  if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j] || grid[i][j] != c)
+  if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j] || grid[i][j] != c) {
     return 0;
+  }
   seen[i][j] = true;
   return countConnected(i, j - 1, c) +
     countConnected(i, j + 1, c) +
@@ -186,8 +185,9 @@ function countConnected(i, j, c) {
 }
 
 function _inspect(i, j) { 
-  if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j])
+  if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j]) {
     return;
+  }
   if(grid[i][j] === grid[0][0]) {
     seen[i][j] = true;
     _inspect(i, j - 1);
@@ -213,16 +213,15 @@ function inspect() {
 
 function floodMax() {
   var c = inspect();
-  flood(c);
+  return flood(c);
 }
 
 function computerSolve() {
   computingMode = true;
-  computerSolution = 0;
-  while(!check()) {
-    floodMax();
+  computerSolution = 1;
+  while(!floodMax()) {
     computerSolution++;
-  } 
+  }
   $('#computer-solution').html(computerSolution);
   reset();
   computingMode = false;
@@ -233,12 +232,13 @@ function computerSolve() {
  */
 function solve() {
   var $solve_button = $('#solve-btn');
-  var robot = setInterval(function() {    
-    if(check()) {
+  var robot = setInterval(function() {
+    solverMode = true;
+    if(floodMax()) {
       clearInterval(robot);
       $solve_button.html(solveLabel);
-    } else
-      floodMax();
+    }
+    solverMode = false;
   }, 500);
   $solve_button.html('Stop!').unbind().click(function() {
     clearInterval(robot);
@@ -259,12 +259,16 @@ $(document).ready(function() {
   $('#new-game-btn').click(makeGrid);
   $('#reset-btn').click(reset);
 
+  $themes = $('#themes');
   for(var i = 0; i < themes.length; i++) {
-    $('#themes').append('<option value="' + i + '">' + themes[i].name + '</option>');
+      $option = $('<option>');
+      $option.val(i);
+      $option.text(themes[i].name);
+    $themes.append($option);
   }
 
   $('#themes').change(function() {
-    colours = themes[Number($('#themes option:selected').val())].colours;
+    colours = themes[Number($(this).find('option:selected').val())].colours;
     refresh();
     makeControls();
   });
@@ -272,7 +276,7 @@ $(document).ready(function() {
   $('#size').change(function() {
     if(!confirm("This will start a new game. Continue?"))
       return;
-    size = Number($('#size option:selected').val());
+    size = Number($(this).find('option:selected').val());
     makeGrid();
   });
 
