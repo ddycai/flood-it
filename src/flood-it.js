@@ -5,6 +5,7 @@ var original = [];
 var cells = [];   //grid of jquery objects
 var seen = [];    //marks seen positions during flooding
 var computingMode = false;
+var computerSolution;
 var solverMode = false;
 var solved = false;
 var solveLabel;
@@ -59,7 +60,7 @@ function makeGrid() {
     }
     $table.append($tr);
   } 
-  computerSolve();
+  computerSolution = computerSolve();
   updateTurn(0);
 }
 
@@ -88,20 +89,22 @@ function makeControls() {
 function updateTurn(n) {
   turn = n;
   $('#counter').html(n);
-  if(n === 0)   
+  if(n === 0) {
     $('#solve-btn').show();
+  }
 }
 
 /**
  * Resets the game
  */
 function reset() {  
-  for(var i = 0; i < size; i++)
+  for(var i = 0; i < size; i++) {
     for(var j = 0; j < size; j++) {
       grid[i][j] = original[i][j];
       if(!computingMode)
         cells[i][j].css('background-color', '#' + colours[grid[i][j]]);
     }
+  }
   updateTurn(0);
 }
 
@@ -115,9 +118,21 @@ function refresh() {
     }
 }
 
+function countConnected(i, j, c) {
+  if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j] || grid[i][j] != c) {
+    return 0;
+  }
+  seen[i][j] = true;
+  return countConnected(i, j - 1, c) +
+    countConnected(i, j + 1, c) +
+    countConnected(i - 1, j, c) +
+    countConnected(i + 1, j, c) + 1;
+}
+
 /**
  * Recursive flooding helper function.
- * Returns the number of grids flooded.
+ * Returns the number of cells of the flooded colour connected to (0, 0)
+ * at the end of flooding.
  */
 function _flood(i, j, original, replace) {
   if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j]) {
@@ -133,8 +148,12 @@ function _flood(i, j, original, replace) {
       _flood(i, j - 1, original, replace) +
       _flood(i + 1, j, original, replace) +
       _flood(i - 1, j, original, replace);
+  } else if (grid[i][j] === replace) {
+    // Unmark this cell for countConnected.
+    seen[i][j] = false;
+    return countConnected(i, j, replace);
   }
-  return (grid[i][j] === replace) ? 1 : 0;
+  return 0;
 }
 
 /**
@@ -147,16 +166,16 @@ function flood(c) {
   clearSeen();
   // Check if number of cells flooded is equal to size of grid.
   var countFlooded = _flood(0, 0, grid[0][0], c);
-  console.log(countFlooded);
   var checkSolved = countFlooded === size * size;
   updateTurn(++turn);
 
   if (!computingMode && !solverMode) {
     if(!solved && checkSolved) {
-      if(turn <= computerSolution)
+      if(turn <= computerSolution) {
         alert(successMsg);
-      else
+      } else {
         alert("Puzzle cleared in " + turn + " moves!");
+      }
       solved = true;
       $('#solve-btn').hide();
     } else if(computerSolution === turn) {
@@ -172,17 +191,6 @@ function flood(c) {
 
 var list = [];
 var computerSolution = -1;
-
-function countConnected(i, j, c) {
-  if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j] || grid[i][j] != c) {
-    return 0;
-  }
-  seen[i][j] = true;
-  return countConnected(i, j - 1, c) +
-    countConnected(i, j + 1, c) +
-    countConnected(i - 1, j, c) +
-    countConnected(i + 1, j, c) + 1;
-}
 
 function _inspect(i, j) { 
   if(i < 0 || j < 0 || i >= size || j >= size || seen[i][j]) {
@@ -201,13 +209,16 @@ function _inspect(i, j) {
 
 function inspect() {
   clearSeen();
-  for(var i = 0; i < colours.length; i++)
+  for(var i = 0; i < colours.length; i++) {
     list[i] = 0;
+  }
   _inspect(0, 0);
   var max = 0;
-  for(var i = 0; i < colours.length; i++)
-    if(list[i] > list[max])
+  for(var i = 0; i < colours.length; i++) {
+    if(list[i] > list[max]){
       max = i;
+    }
+  }
   return max;
 }
 
@@ -218,13 +229,14 @@ function floodMax() {
 
 function computerSolve() {
   computingMode = true;
-  computerSolution = 1;
+  var computerSolution = 1;
   while(!floodMax()) {
     computerSolution++;
   }
   $('#computer-solution').html(computerSolution);
   reset();
   computingMode = false;
+  return computerSolution;
 }
 
 /**
